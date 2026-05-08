@@ -1,11 +1,20 @@
 import os
 import time
 import cv2
+import serial
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 TRACKED_SHAPES = ["jawOpen", "browInnerUp", "eyeBlinkLeft", "eyeBlinkRight", "mouthSmileLeft", "mouthSmileRight"]
+
+ser = serial.Serial('/dev/ttyACM0', 115200, timeout = 0.1)
+
+def send_to_serial(jaw, ex, ey, bl, br):
+    # Format: $JAW,EX,EY,BL,BR#
+    # We round to 2 decimals to keep the string short
+    packet = f"${jaw:.2f},{ex:.2f},{ey:.2f},{bl:.2f},{br:.2f}#"
+    ser.write(packet.encode('utf-8'))
 
 mod_path = "face_landmarker_v2_with_blendshapes.task"
 if not os.path.exists(mod_path):
