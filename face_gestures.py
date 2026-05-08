@@ -5,6 +5,8 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
+TRACKED_SHAPES = ["jawOpen", "browInnerUp", "eyeBlinkLeft", "eyeBlinkRight", "mouthSmileLeft", "mouthSmileRight"]
+
 mod_path = "face_landmarker_v2_with_blendshapes.task"
 if not os.path.exists(mod_path):
     print("Downloading model...")
@@ -34,6 +36,8 @@ while cap.isOpened():
     success, frame = cap.read()
     if not success: break
 
+    frame = cv2.flip(frame, 1)
+
     timestamp = int(time.time() * 1000)
 
     # Convert to MediaPipe Image
@@ -52,9 +56,20 @@ while cap.isOpened():
                 y = int(landmark.y * frame.shape[0])
                 cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
 
+        # Accessing Blendshapes (The "Gesture" part)
+        if latest_result.face_blendshapes:
+            blendshape_dict = {category.category_name: category.score for category in latest_result.face_blendshapes[0]}
 
+            # And display
+            y_offset = 30
+            for shape in TRACKED_SHAPES:
+                score = blendshape_dict.get(shape, 0)
+                test = f"{shape}: {score:.2f}"
 
-    cv2.imshow("Cabezon", cv2.flip(frame, 1))
+                cv2.putText(frame, test, (10, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                y_offset += 20
+
+    cv2.imshow("Cabezon", frame)
     if cv2.waitKey(1) & 0xFF == 27: break
 
 detector.close()
