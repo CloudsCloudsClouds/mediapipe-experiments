@@ -1,0 +1,107 @@
+import os
+import time
+import cv2
+import serial
+import time
+import mediapipe as mp
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
+
+TRACKED_SHAPES = ["jawOpen", "browInnerUp", "eyeBlinkLeft", "eyeBlinkRight", "mouthSmileLeft", "mouthSmileRight"]
+
+ser = serial.Serial('/dev/ttyACM0', 115200, timeout = 0.1)
+last_send_time = 0
+send_interval = 0.05 # 20 Hz
+
+def send_to_serial(jaw, ex, ey, bl, br):
+    # Format: $JAW,EX,EY,BL,BR#
+    # We round to 2 decimals to keep the string short
+    packet = f"${jaw:.2f},{ex:.2f},{ey:.2f},{bl:.2f},{br:.2f}#"
+    ser.write(packet.encode('utf-8'))
+
+mod_path = "face_landmarker_v2_with_blendshapes.task"
+if not os.path.exists(mod_path):
+    print("Downloading model...")
+    os.system(f"wget -O {mod_path} https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task")
+
+# Global variable to store latest results
+latest_result = None
+
+def result_callback(result: vision.FaceLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
+    global latest_result
+    latest_result = result
+
+# Configure Options
+base_options = python.BaseOptions(model_asset_path=mod_path)
+options = vision.FaceLandmarkerOptions(
+    base_options=base_options,
+    running_mode=vision.RunningMode.LIVE_STREAM,
+    output_face_blendshapes=True,
+    result_callback=result_callback
+)
+
+# Main Loop
+detector = vision.FaceLandmarker.create_from_options(options)
+cap = cv2.VideoCapture(0)
+
+while cap.isOpened():
+    success, frame = cap.read()
+    if not success: break
+
+    frame = cv2.flip(frame, 1)
+
+    timestamp = int(time.time() * 1000)
+
+    # Convert to MediaPipe Image
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+
+    # Trigger asynchronous detection
+    detector.detect_async(mp_image, timestamp)
+    # I hate async
+
+    # Use the global latest_result for visualization
+    if latest_result and latest_result.face_landmarks:
+        for face_landmarks in latest_result.face_landmarks:
+            for landmark in face_landmarks:
+                x = int(landmark.x * frame.shape[1])
+                y = int(landmark.y * frame.shape[0])
+                cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
+
+        # Accessing Blendshapes (The "Gesture" part)
+        if latest_result.face_blendshapes:
+            blendshape_dict = {category.category_name: category.score for category in latest_result.face_blendshapes[0]}
+
+            # And display
+            y_offset = 30
+            for shape in TRACKED_SHAPES:
+                score = blendshape_dict.get(shape, 0)
+                test = f"{shape}: {score:.2f}"
+
+                cv2.putText(frame, test, (10, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                y_offset += 20
+
+    # Send Logic
+    current_time = time.time()
+    if current_time - last_send_time > send_interval:
+        if latest_result and latest_result.face_blendshapes:
+            # Extract values
+            blendshape_dict = {category.category_name: category.score for category in latest_result.face_blendshapes[0]}
+
+            jaw = blendshape_dict.get("jawOpen", 0)
+            blink_l = blendshape_dict.get("eyeBlinkLeft", 0)
+            blink_r = blendshape_dict.get("eyeBlinkRight", 0)
+            smile_l = blendshape_dict.get("mouthSmileLeft", 0)
+            smile_r = blendshape_dict.get("mouthSmileRight", 0)
+
+            send_to_serial(jaw, blink_l, blink_r, smile_l, smile_r)
+
+            last_send_time = current_time
+
+
+    cv2.imshow("Cabezon", frame)
+    if cv2.waitKey(1) & 0xFF == 27: break
+
+detector.close()
+cap.release()
+cv2.destroyAllWindows()
