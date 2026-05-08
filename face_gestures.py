@@ -2,6 +2,7 @@ import os
 import time
 import cv2
 import serial
+import time
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
@@ -9,6 +10,8 @@ from mediapipe.tasks.python import vision
 TRACKED_SHAPES = ["jawOpen", "browInnerUp", "eyeBlinkLeft", "eyeBlinkRight", "mouthSmileLeft", "mouthSmileRight"]
 
 ser = serial.Serial('/dev/ttyACM0', 115200, timeout = 0.1)
+last_send_time = 0
+send_interval = 0.05 # 20 Hz
 
 def send_to_serial(jaw, ex, ey, bl, br):
     # Format: $JAW,EX,EY,BL,BR#
@@ -77,6 +80,24 @@ while cap.isOpened():
 
                 cv2.putText(frame, test, (10, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
                 y_offset += 20
+
+    # Send Logic
+    current_time = time.time()
+    if current_time - last_send_time > send_interval:
+        if latest_result and latest_result.face_blendshapes:
+            # Extract values
+            blendshape_dict = {category.category_name: category.score for category in latest_result.face_blendshapes[0]}
+
+            jaw = blendshape_dict.get("jawOpen", 0)
+            blink_l = blendshape_dict.get("eyeBlinkLeft", 0)
+            blink_r = blendshape_dict.get("eyeBlinkRight", 0)
+            smile_l = blendshape_dict.get("mouthSmileLeft", 0)
+            smile_r = blendshape_dict.get("mouthSmileRight", 0)
+
+            send_to_serial(jaw, blink_l, blink_r, smile_l, smile_r)
+
+            last_send_time = current_time
+
 
     cv2.imshow("Cabezon", frame)
     if cv2.waitKey(1) & 0xFF == 27: break
