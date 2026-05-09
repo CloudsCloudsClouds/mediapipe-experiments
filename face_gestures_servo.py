@@ -1,4 +1,5 @@
 import os
+import urllib.request
 import time
 import cv2
 import serial
@@ -12,7 +13,7 @@ TRACKED_SHAPES = ["jawOpen", "browInnerUp", "eyeBlinkLeft", "eyeBlinkRight", "mo
 
 ser = serial.Serial('/dev/ttyUSB0', 115200, timeout = 0.1)
 last_send_time = 1
-send_interval = 0.1 # 40 Hz
+send_interval = 0.2 # 10 Hz
 
 # 1. Update the send function to accept yaw
 def send_to_serial(jaw, ex, ey, bl, br, yaw):
@@ -21,9 +22,15 @@ def send_to_serial(jaw, ex, ey, bl, br, yaw):
     ser.write(packet.encode('utf-8'))
 
 mod_path = "face_landmarker_v2_with_blendshapes.task"
+url = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
 if not os.path.exists(mod_path):
     print("Downloading model...")
-    os.system(f"wget -O {mod_path} https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task")
+    try:
+        urllib.request.urlretrieve(url, mod_path)
+        print("Download complete.")
+    except Exception as e:
+        print(f"Failed to download model: {e}")
+        exit(1)
 
 # Global variable to store latest results
 latest_result = None

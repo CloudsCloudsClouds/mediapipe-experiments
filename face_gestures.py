@@ -1,4 +1,5 @@
 import os
+import urllib.request
 import time
 import cv2
 import time
@@ -9,9 +10,15 @@ from mediapipe.tasks.python import vision
 TRACKED_SHAPES = ["jawOpen", "browInnerUp", "eyeBlinkLeft", "eyeBlinkRight", "mouthSmileLeft", "mouthSmileRight"]
 
 mod_path = "face_landmarker_v2_with_blendshapes.task"
+url = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
 if not os.path.exists(mod_path):
     print("Downloading model...")
-    os.system(f"wget -O {mod_path} https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task")
+    try:
+        urllib.request.urlretrieve(url, mod_path)
+        print("Download complete.")
+    except Exception as e:
+        print(f"Failed to download model: {e}")
+        exit(1)
 
 # Global variable to store latest results
 latest_result = None
@@ -67,7 +74,7 @@ while cap.isOpened():
                 score = blendshape_dict.get(shape, 0)
                 test = f"{shape}: {score:.2f}"
 
-                cv2.putText(frame, test, (10, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                cv2.putText(frame, test, (10, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                 y_offset += 20
 
     cv2.imshow("Cabezon", frame)
