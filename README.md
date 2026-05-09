@@ -14,8 +14,8 @@ source .venv/bin/activate
 3. Correr las demos
 
 - [x] Deteccion de cabeza en general - `uv run face_detection.py`
-- [x] Deteccion de gestos de el rostro
-  - [x] Enviar informacion sobre los gestos mediante serial 
+- [x] Deteccion de gestos de el rostro - `uv run face_gestures.py`
+  - [x] Enviar informacion sobre los gestos mediante serial - `uv run face_gestures_servo.py`
 - [ ] Deteccion de gestos del brazo
 - [ ] Deteccion de apuntar a direccion con los brazos
 
