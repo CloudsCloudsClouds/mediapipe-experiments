@@ -2,6 +2,10 @@ import sys
 import json
 import math
 
+# Consider, this isn't the brain. This just takes whats already on the stdout
+# and sets the directions based on that.
+# Good for serial_bridge.
+
 # Enble to send eyes.
 EYE_ENABLED = True
 EYE_SCALE = 100
@@ -21,14 +25,11 @@ EYE_SCALE = 100
 # Select what you need. Except EYES.
 
 
-# For each key: source is either a blendshape name or "transform" (yaw from matrix),
-# range maps the natural 0-1 (or -90-90 for yaw) to the needed by the servos.
+# For each key:
+#   source: blendshape name | "transform" (yaw from matrix) | "direct" (key from JSON root)
+#   range: output range for the servos
+#   src_range: (optional, for "direct") input range to remap from
 
-# Anatomy of a key:
-# "key" : {
-#   "source": "key of medapipe",
-#   "range": "Python range"
-# },
 DIRECTION_CONFIG = {
     "jaw":    {"source": "jawOpen",        "range": (0, 30)},
     "brow":   {"source": "browInnerUp",    "range": (0, 20)},
@@ -36,7 +37,7 @@ DIRECTION_CONFIG = {
     "smileR": {"source": "mouthSmileRight", "range": (0, 40)},
     "blinkL": {"source": "eyeBlinkLeft",    "range": (0, 100)},
     "blinkR": {"source": "eyeBlinkRight",   "range": (0, 100)},
-    "yaw":    {"source": "transform",       "range": (-90, 90)},
+    "yaw":    {"source": "direct",          "src_range": (-180, 180), "range": (-90, 90)},
 }
 
 def compute_yaw(matrix):
@@ -74,30 +75,38 @@ for line in sys.stdin:
             else:
                 raw = 0.0
             output[key] = lerp(raw, (-90, 90), cfg["range"])
+        elif cfg["source"] == "direct":
+            raw = data.get(key, 0.0)
+            if "src_range" in cfg:
+                output[key] = lerp(raw, cfg["src_range"], cfg["range"])
+            else:
+                output[key] = raw
         else:
             raw = blendshapes.get(cfg["source"], 0.0)
             output[key] = lerp(raw, (0, 1), cfg["range"])
 
-    # O dios mio.
-    # Broad strokes:
-        # We need 8 keys min to have directions of 2 eyes
-        # We need to simplify this to min 4 keys
-            # Could be less, more complexity
-        # Send the data.
-        # In the X space, negative is movement out of nose, positive is movement into nose.
     if EYE_ENABLED:
-        li = blendshapes.get("eyeLookInLeft", 0)
-        lo = blendshapes.get("eyeLookOutLeft", 0)
-        lu = blendshapes.get("eyeLookUpLeft", 0)
-        ld = blendshapes.get("eyeLookDownLeft", 0)
-        output["elx"] = (li - lo) * EYE_SCALE   # + = in (toward nose)
-        output["ely"] = (lu - ld) * EYE_SCALE   # + = up
+        # If the upstream brain (pose_capture) already computed eye override, use it.
+        eye_ox = data.get("eye_x")
+        eye_oy = data.get("eye_y")
+        if eye_ox is not None and eye_oy is not None:
+            output["elx"] = eye_ox
+            output["ely"] = eye_oy
+            output["erx"] = eye_ox
+            output["ery"] = eye_oy
+        else:
+            li = blendshapes.get("eyeLookInLeft", 0)
+            lo = blendshapes.get("eyeLookOutLeft", 0)
+            lu = blendshapes.get("eyeLookUpLeft", 0)
+            ld = blendshapes.get("eyeLookDownLeft", 0)
+            output["elx"] = (li - lo) * EYE_SCALE   # + = in (toward nose)
+            output["ely"] = (lu - ld) * EYE_SCALE   # + = up
 
-        ri = blendshapes.get("eyeLookInRight", 0)
-        ro = blendshapes.get("eyeLookOutRight", 0)
-        ru = blendshapes.get("eyeLookUpRight", 0)
-        rd = blendshapes.get("eyeLookDownRight", 0)
-        output["erx"] = (ri - ro) * EYE_SCALE
-        output["ery"] = (ru - rd) * EYE_SCALE
+            ri = blendshapes.get("eyeLookInRight", 0)
+            ro = blendshapes.get("eyeLookOutRight", 0)
+            ru = blendshapes.get("eyeLookUpRight", 0)
+            rd = blendshapes.get("eyeLookDownRight", 0)
+            output["erx"] = (ri - ro) * EYE_SCALE
+            output["ery"] = (ru - rd) * EYE_SCALE
 
     print(json.dumps(output), flush=True)
