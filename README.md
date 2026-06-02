@@ -25,7 +25,9 @@ source .venv/bin/activate
   - `serial_bridge.py` Envio de datos mediante serial. Configurable del puerto, baud, etc.
 - [-] Deteccion de gestos del brazo
   - Postergado por el momento
-- [/] Deteccion de apuntar a direccion con los brazos
-  - Actualmente en trabajo
+- [x] Deteccion de apuntar a direccion con los ~~brazos~~ indice
+  - `uv run pose_capture.py set_directions.py serial_bridge.py`
+  - Nomas funciona con el indice, y hay un error que no distingue entre mano plana y apuntar. 
+    - Probablemente corregible con ese landmark de pistola.
 
 Notar que esto por ahora son demos y no hay comunicacion con el robot mediante serial. Esto esta reservado un proyecto distinto utilizando ros (no viable por ahora).
