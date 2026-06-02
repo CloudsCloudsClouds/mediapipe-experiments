@@ -15,6 +15,7 @@ POINT_GAIN = 500            # hand vector -> degrees multiplier for neck yaw/pit
 EYE_GAIN = 50              # hand vector -> eye offset multiplier
 HOLD_DURATION = 2.0        # seconds to hold direction after hand drops
 
+# As always, there are more shapes to be selected. Loos at set_directions.
 TRACKED_SHAPES = ["jawOpen", "browInnerUp", "eyeBlinkLeft", "eyeBlinkRight", "mouthSmileLeft", "mouthSmileRight"]
 
 # --- Model paths ---
@@ -50,6 +51,7 @@ def face_callback(result: vision.FaceLandmarkerResult, output_image: mp.Image, t
     global face_latest
     face_latest = result
 
+# Pain. Horror. Its so so much better to have it all async now.
 def hand_callback(result: vision.HandLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
     global hand_latest
     hand_latest = result
@@ -66,6 +68,8 @@ face_opts = vision.FaceLandmarkerOptions(
 face_detector = vision.FaceLandmarker.create_from_options(face_opts)
 
 # --- Hand detector ---
+# It appears that it's the same as gesture. It isn't.
+# It only detects one hand, configurable.
 hand_base = python.BaseOptions(model_asset_path=HAND_MODEL)
 hand_opts = vision.HandLandmarkerOptions(
     base_options=hand_base,
