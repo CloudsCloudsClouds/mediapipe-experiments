@@ -68,15 +68,15 @@ while cap.isOpened():
     output = {}
     if latest_result:
         if latest_result.face_blendshapes:
-            blendshape_dict = {cat.category_name: cat.score for cat in latest_result.face_blendshapes[0]}
+            blendshape_dict = {cat.category_name: float(cat.score) for cat in latest_result.face_blendshapes[0]}
             output["blendshapes"] = blendshape_dict
 
         if latest_result.facial_transformation_matrixes:
             matrix = latest_result.facial_transformation_matrixes[0]
             output["transform"] = {
-                "m00": matrix[0, 0], "m01": matrix[0, 1], "m02": matrix[0, 2], "m03": matrix[0, 3],
-                "m10": matrix[1, 0], "m11": matrix[1, 1], "m12": matrix[1, 2], "m13": matrix[1, 3],
-                "m20": matrix[2, 0], "m21": matrix[2, 1], "m22": matrix[2, 2], "m23": matrix[2, 3],
+                "m00": float(matrix[0, 0]), "m01": float(matrix[0, 1]), "m02": float(matrix[0, 2]), "m03": float(matrix[0, 3]),
+                "m10": float(matrix[1, 0]), "m11": float(matrix[1, 1]), "m12": float(matrix[1, 2]), "m13": float(matrix[1, 3]),
+                "m20": float(matrix[2, 0]), "m21": float(matrix[2, 1]), "m22": float(matrix[2, 2]), "m23": float(matrix[2, 3]),
             }
 
     if output:
