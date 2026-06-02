@@ -15,8 +15,12 @@ source .venv/bin/activate
 
 - [x] Deteccion de cabeza en general - `uv run face_detection.py`
 - [x] Deteccion de gestos de el rostro - `uv run face_gestures.py`
-  - [x] Enviar informacion sobre los gestos mediante serial - `uv run face_gestures_servo.py`
-- [ ] Deteccion de gestos del brazo
-- [ ] Deteccion de apuntar a direccion con los brazos
+  - [-] Enviar informacion sobre los gestos mediante serial - `uv run face_gestures_servo.py`
+  - Mejor utilizar `uv run face_capture.py`, este desacopla la logica de deteccion de rostros.
+  - [x] Añadido `serial_bridge.py`, que decide QUE mandar por serial. Desacoplamiento.
+- [-] Deteccion de gestos del brazo
+  - Postergado por el momento
+- [/] Deteccion de apuntar a direccion con los brazos
+  - Actualmente en trabajo
 
 Notar que esto por ahora son demos y no hay comunicacion con el robot mediante serial. Esto esta reservado un proyecto distinto utilizando ros (no viable por ahora).
