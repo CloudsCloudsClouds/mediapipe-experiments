@@ -55,4 +55,13 @@ source .venv/bin/activate
   - Nomas funciona con el indice, y hay un error que no distingue entre mano plana y apuntar. 
     - Probablemente corregible con ese landmark de pistola.
 
+Tambien puedes usar los comandos via `make`:
+
+```bash
+make face-gesture   # face_capture.py | classify_gesture.py | gesture_serial.py
+make pose-gesture   # pose_capture.py | classify_gesture.py | gesture_serial.py
+make face-stream    # face_capture.py | set_directions.py | serial_bridge.py
+make pose-stream    # pose_capture.py | set_directions.py | serial_bridge.py
+```
+
 Notar que esto por ahora son demos y no hay comunicacion con el robot mediante serial. Esto esta reservado un proyecto distinto utilizando ros (no viable por ahora).
