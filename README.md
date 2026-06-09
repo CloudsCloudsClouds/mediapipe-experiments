@@ -10,6 +10,8 @@
 
 > `face_capture` es "el cerebro", detecta rostros.
 
+>   `pose_capture.py` tambien funciona, detecta rostros y apuntar con el dedo
+
 > `classify_gesture` interpreta los datos del cerebro a comandos para el arduino
 
 > `gesture_serial` manda los comandos por serial
