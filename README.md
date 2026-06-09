@@ -1,3 +1,14 @@
+> [!NOTE] Ejecutar para el ultimo codigo de arduino
+> El ultimo codigo de arduino utiliza comandos, no stream de datos
+> Para ejecutar el codigo actual, utiliza:
+> `uv run face_capture.py | uv run classify_gesture.py | uv run gesture_serial.py`
+> Este utiliza 3 scripts
+> `face_capture` es "el cerebro", detecta rostros.
+> `classify_gesture` interpreta los datos del cerebro a comandos para el arduino
+> `gesture_serial` manda los comandos por serial
+
+---
+
 # Experimentos de mediapipe para el proyecto del robot
 
 Utilizo [`uv`](https://docs.astral.sh/uv/). Instalenlo. Tambien utilizo venv por buena medida
