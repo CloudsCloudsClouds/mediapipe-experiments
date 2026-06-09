@@ -26,6 +26,11 @@ source .venv/bin/activate
 - [-] Deteccion de gestos del brazo
   - Postergado por el momento
 - [x] Deteccion de apuntar a direccion con los ~~brazos~~ indice
+- [x] Clasificador de gestos faciales para control por comandos
+  - `uv run face_capture.py | uv run classify_gesture.py | uv run gesture_serial.py`
+  - `classify_gesture.py` Lee datos del rostro y clasifica la expresion en un comando de gesto (parpadeo, sonrisa, sorpresa, etc.)
+  - `gesture_serial.py` Envia el comando como texto plano por serial al Arduino (9600 baud)
+  - Los comandos corresponden a los gestos preprogramados en el firmware del Arduino
   - `uv run pose_capture.py set_directions.py serial_bridge.py`
   - Nomas funciona con el indice, y hay un error que no distingue entre mano plana y apuntar. 
     - Probablemente corregible con ese landmark de pistola.
